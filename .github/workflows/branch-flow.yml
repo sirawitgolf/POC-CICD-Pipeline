@@ -1,0 +1,32 @@
+name: Enforce Branch Flow
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  validate-branch-flow:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate PR flow
+        run: |
+          echo "Base branch: ${{ github.base_ref }}"
+          echo "Head branch: ${{ github.head_ref }}"
+
+          # ❌ main รับได้แค่จาก staging
+          if [[ "${{ github.base_ref }}" == "main" && "${{ github.head_ref }}" != "staging" ]]; then
+            echo "❌ You must merge into main only from staging"
+            exit 1
+          fi
+
+          # ❌ staging รับได้แค่จาก develop
+          if [[ "${{ github.base_ref }}" == "staging" && "${{ github.head_ref }}" != "develop" ]]; then
+            echo "❌ You must merge into staging only from develop"
+            exit 1
+          fi
+
+          echo "✅ Branch flow is valid"
