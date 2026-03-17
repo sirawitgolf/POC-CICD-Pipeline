@@ -1,0 +1,43 @@
+name: Commit Lint
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  commitlint:
+    name: Validate Commit Messages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.1.0
+        with:
+          node-version: '20'
+
+      - name: Install commitlint
+        run: |
+          npm install --save-dev @commitlint/cli@19 @commitlint/config-conventional@19
+
+      - name: Validate commits in PR
+        if: github.event_name == 'pull_request'
+        run: |
+          npx commitlint \
+            --from ${{ github.event.pull_request.base.sha }} \
+            --to ${{ github.event.pull_request.head.sha }} \
+            --verbose
+
+      - name: Validate last commit on push
+        if: github.event_name == 'push'
+        run: |
+          npx commitlint --last --verbose
