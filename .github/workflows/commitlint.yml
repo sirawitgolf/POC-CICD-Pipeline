@@ -8,6 +8,9 @@ on:
       - opened
       - synchronize
       - reopened
+permissions:
+  contents: read      # สำหรับ checkout
+  pull-requests: write  # สำหรับ comment PR
 
 jobs:
   commitlint:
@@ -16,38 +19,26 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
 
-      - name: Get commits
-        run: |
-          # ดึง base branch เพื่อใช้ compare
-          git fetch origin ${{ github.base_ref }} --depth=1
-
-          # เก็บ commit ใน PR (hash + message)
-          git log origin/${{ github.base_ref }}..HEAD --pretty=format:"%h|%s" > commits.txt
-
-      - name: Validate commits (per commit)
+      - name: Validate commits
         id: lint
         run: |
+          # ติดตั้ง commitlint
           npm install -g @commitlint/cli @commitlint/config-conventional
 
-          FAIL=0
-          > result.txt
+          # ตรวจทุก commit ใน PR เทียบกับ base branch
+          # ใช้ --from/--to แทนการสร้าง commits.txt
+          npx commitlint --from origin/${{ github.base_ref }} --to HEAD --config commitlint.config.js --no-color | tee result.txt || true
 
-          # อ่าน commit.txt ทีละบรรทัดเช็ค commit message แล้วบันทึกผลลัพธ์ลงใน result.txt
-          while IFS="|" read -r hash msg
-          do
-            echo "$msg" | npx commitlint --config commitlint.config.js > /dev/null 2>&1
-            if [ $? -ne 0 ]; then
-              echo "❌ $hash $msg" >> result.txt
-              FAIL=1
-            else
-              echo "✅ $hash $msg" >> result.txt
-            fi
-          done < commits.txt
-
-          # export output ไปในตัวแปร fail
-          echo "fail=$FAIL" >> $GITHUB_OUTPUT
+          # ถ้า result.txt มี ✖ แปลว่ามี commit fail
+          if grep -q "✖" result.txt; then
+            echo "fail=1" >> $GITHUB_OUTPUT
+          else
+            echo "fail=0" >> $GITHUB_OUTPUT
+          fi
 
       - name: Manage PR comment
         uses: actions/github-script@v7
@@ -82,9 +73,10 @@ jobs:
             \`\`\`
 
             👉 วิธีแก้:
-            - git commit --amend
+            - git commit --amend สำหรับ commit message ล่าสุด
             - หรือ git rebase -i origin/${context.payload.pull_request.base.ref}
-            - แล้ว push --force
+            - หรือ git rebase -i HEAD~N (N หมายถึงจำนวนที่ต้องการแก้นับจากใหม่ไปเก่า)
+            - แล้ว git push --force-with-lease 
             `;
 
               if (botComment) {
