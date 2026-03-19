@@ -1,0 +1,48 @@
+name: Check Revert Balance
+
+on:
+  pull_request:
+    branches:
+      - prod
+      - staging
+      - develop
+
+jobs:
+  check-revert:
+    name: Check Revert Balance
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check revert balance
+        run: |
+          git fetch origin prod
+
+          LOG=$(git log origin/prod --pretty=format:"%s")
+
+          REVERTS=$(echo "$LOG" | grep '^Revert "' || true)
+
+          FAIL=0
+
+          while read -r line; do
+            [ -z "$line" ] && continue
+
+            ORIGINAL=$(echo "$line" | sed 's/^Revert "//' | sed 's/"$//')
+            DOUBLE="Revert \"Revert \"$ORIGINAL\"\""
+
+            if ! echo "$LOG" | grep -Fq "$DOUBLE"; then
+              echo "❌ Unreverted revert found:"
+              echo "$line"
+              FAIL=1
+            fi
+
+          done <<< "$REVERTS"
+
+          if [ $FAIL -eq 1 ]; then
+            exit 1
+          fi
+
+          echo "✅ Revert OK"
