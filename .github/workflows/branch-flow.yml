@@ -8,6 +8,9 @@ on:
       - develop
     types: [opened, synchronize, reopened]
 
+permissions:
+  pull-requests: write  # สำหรับ comment PR
+
 jobs:
   validate-branch-flow:
     runs-on: ubuntu-latest
