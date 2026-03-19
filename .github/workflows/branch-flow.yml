@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   validate-branch-flow:
+    name: Validate branch flow
     runs-on: ubuntu-latest
 
     steps:
