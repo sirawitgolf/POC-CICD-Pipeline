@@ -1,38 +1,34 @@
 # POC-CICD-Pipeline
 
-POC repository for GitHub governance and CI/CD controls.
+Project for POC Pipeline — proving concepts around repository governance and CI/CD practices.
 
-## Workflows Overview
+---
 
-This project currently contains 3 GitHub Actions workflows:
+## POC Concepts
 
-| Workflow | File | Trigger | What it enforces |
-|---|---|---|---|
-| Commit Lint | `.github/workflows/commitlint.yml` | `pull_request` to `develop` (`opened`, `synchronize`, `reopened`) | Commit messages in the PR follow Conventional Commits |
-| PR Title Lint | `.github/workflows/pr-title-lint.yml` | `pull_request` (`opened`, `edited`, `synchronize`, `reopened`) | PR title follows Conventional Commits with lowercase subject |
-| Enforce Branch Flow | `.github/workflows/branch-flow.yml` | `pull_request` to `main`, `staging`, `develop` (`opened`, `synchronize`, `reopened`) | PR source/target branch flow is valid |
+### 1. Branch Protection
 
-## Branch Flow Rules
+The `main` branch should be protected with the following rules (configured in **Settings → Branches → Branch protection rules**):
 
-Defined in `.github/workflows/branch-flow.yml`:
+| Rule | Value |
+|------|-------|
+| Require a pull request before merging | ✅ Enabled |
+| Require approvals | 1 reviewer |
+| Require status checks to pass | `Validate Commit Messages`, `Validate PR Title` |
+| Require branches to be up to date | ✅ Enabled |
+| Do not allow bypassing the above settings | ✅ Enabled |
 
-1. `main` accepts PRs only from `staging`.
-2. `staging` accepts PRs only from `develop`.
-3. `develop` accepts PRs from branches that are based on latest `develop`.
+This ensures no one can push directly to `main` and all changes must go through a reviewed, validated PR.
 
-Behavior when invalid:
+---
 
-1. Workflow comments on the PR with the reason.
-2. Invalid PRs targeting `main` or `staging` are auto-closed.
-3. For `develop`, the workflow fails and comments, but does not auto-close.
+### 2. Commit Message Format (Conventional Commits)
 
-## Commit Message Validation
+All commit messages must follow the [Conventional Commits](https://www.conventionalcommits.org/) specification, enforced by the **Commit Lint** GitHub Actions workflow (`.github/workflows/commitlint.yml`) using [`commitlint`](https://commitlint.js.org/).
 
-Commit messages are validated by `commitlint` using `commitlint.config.js`.
+**Format:**
 
-### Conventional Commit format
-
-```text
+```
 <type>(<optional scope>): <subject>
 
 [optional body]
@@ -40,48 +36,56 @@ Commit messages are validated by `commitlint` using `commitlint.config.js`.
 [optional footer(s)]
 ```
 
-### Allowed types and when to use
+**Allowed types:**
 
-| Type | ใช้เมื่อ | ตัวอย่าง |
-|---|---|---|
-| `feat` | เพิ่มฟีเจอร์ใหม่ที่มีผลกับผู้ใช้งาน | `feat: add user profile page` |
-| `fix` | แก้บั๊กหรือพฤติกรรมที่ผิดพลาด | `fix(auth): handle expired token` |
-| `docs` | แก้หรือเพิ่มเอกสาร เช่น README, API docs | `docs: update deployment guide` |
-| `style` | ปรับรูปแบบโค้ดที่ไม่เปลี่ยน logic เช่น spacing, formatting | `style: format lint config` |
-| `refactor` | ปรับโครงสร้างโค้ดโดยไม่เปลี่ยนพฤติกรรม | `refactor: split branch validation logic` |
-| `test` | เพิ่มหรือแก้ชุดทดสอบ | `test: add commitlint workflow tests` |
-| `chore` | งานดูแลโปรเจกต์ทั่วไปที่ไม่ใช่ feature/fix โดยตรง | `chore: update ignore rules` |
-| `ci` | เปลี่ยนแปลง pipeline/workflow CI/CD | `ci: add branch-flow check` |
-| `build` | เปลี่ยนระบบ build หรือ dependency ที่กระทบการ build | `build: update npm scripts for lint` |
-| `perf` | ปรับปรุงประสิทธิภาพ | `perf: optimize branch lookup script` |
-| `revert` | ย้อน commit ก่อนหน้า | `revert: revert "feat: add login page"` |
+| Type | Description |
+|------|-------------|
+| `feat` | A new feature |
+| `fix` | A bug fix |
+| `docs` | Documentation changes |
+| `style` | Code style changes (formatting, etc.) |
+| `refactor` | Code refactoring |
+| `perf` | Performance improvements |
+| `test` | Adding or updating tests |
+| `build` | Build system or dependency changes |
+| `ci` | CI/CD configuration changes |
+| `chore` | Maintenance tasks |
+| `revert` | Reverting a previous commit |
 
-### Additional commitlint behavior in this repo
+**Examples:**
+```
+feat: add user authentication
+fix(api): handle null response from external service
+docs: update README with setup instructions
+ci: add commitlint workflow
+```
 
-1. Default ignores are enabled.
-2. Messages starting with `Merge`, `Revert`, `Pull request`, or containing `[skip-lint]` are ignored.
-3. Subject case rule is disabled (`subject-case`).
+---
 
-## PR Title Validation
+### 3. PR Title Format (Conventional Commits)
 
-PR title lint uses `amannn/action-semantic-pull-request` with:
+Pull request titles must also follow the [Conventional Commits](https://www.conventionalcommits.org/) format, enforced by the **PR Title Lint** GitHub Actions workflow (`.github/workflows/pr-title-lint.yml`) using [`action-semantic-pull-request`](https://github.com/amannn/action-semantic-pull-request).
 
-1. Same allowed types as commitlint.
-2. `requireScope: false`.
-3. Subject must start with lowercase (pattern: `^(?![A-Z]).+$`).
+**Format:**
+```
+<type>(<optional scope>): <subject starting with lowercase>
+```
 
-Example valid titles:
-
-```text
+**Examples:**
+```
 feat: add login page
 fix(auth): resolve token expiry issue
 docs: update API documentation
 ```
 
-## Notes for Branch Protection
+The workflow runs on every PR open, edit, sync, and reopen event targeting `main`.
 
-To match these workflows, configure required status checks per target branch:
+---
 
-1. `main`: `Validate branch flow` and `Validate PR Title`.
-2. `staging`: `Validate branch flow` and `Validate PR Title`.
-3. `develop`: `Validate branch flow`, `Validate Commit Messages`, and `Validate PR Title`.
+## Workflow Files
+
+| File | Purpose |
+|------|---------|
+| `.github/workflows/commitlint.yml` | Validates commit messages on push and in PRs |
+| `.github/workflows/pr-title-lint.yml` | Validates PR title format on PRs targeting `main` |
+| `commitlint.config.js` | commitlint configuration using `@commitlint/config-conventional` |
