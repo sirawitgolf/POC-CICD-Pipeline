@@ -3,13 +3,12 @@ name: Check Revert Balance
 on:
   pull_request:
     branches:
-      - prod
+      - main
       - staging
       - develop
 
 jobs:
   check-revert:
-    name: Check Revert Balance
     runs-on: ubuntu-latest
 
     steps:
@@ -19,9 +18,9 @@ jobs:
 
       - name: Check revert balance
         run: |
-          git fetch origin prod
+          git fetch origin main
 
-          LOG=$(git log origin/prod --pretty=format:"%s")
+          LOG=$(git log origin/main --pretty=format:"%s")
 
           REVERTS=$(echo "$LOG" | grep '^Revert "' || true)
 

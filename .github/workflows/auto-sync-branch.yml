@@ -3,12 +3,11 @@ name: Auto Sync
 on:
   push:
     branches:
-      - prod
+      - main
       - staging
 
 jobs:
   sync:
-    name: Auto Sync Branches
     runs-on: ubuntu-latest
 
     steps:
@@ -27,12 +26,12 @@ jobs:
 
           BRANCH="${GITHUB_REF#refs/heads/}"
 
-          if [ "$BRANCH" = "prod" ]; then
-            echo "🔁 prod → staging"
+          if [ "$BRANCH" = "main" ]; then
+            echo "🔁 main → staging"
             git checkout staging
 
-            if ! git merge origin/prod --no-edit 2>&1; then
-                echo "❌ Merge from prod to staging failed"
+            if ! git merge origin/main --no-edit 2>&1; then
+                echo "❌ Merge from main to staging failed"
                 exit 1
             fi 
 
@@ -46,6 +45,6 @@ jobs:
                 echo "❌ Merge from staging to develop failed"
                 exit 1
             fi          
-              
+
             git push origin develop
           fi
