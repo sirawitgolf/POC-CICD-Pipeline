@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Fetch all branches
-        run: git fetch --all
+        run: git fetch origin +refs/heads/*:refs/remotes/origin/*
 
       - name: Validate PR flow
         id: validate
@@ -41,25 +41,46 @@ jobs:
             CLOSE="true"
           fi
 
-          # ✅ staging รับได้จาก develop และ hotfix/*
+          # ❌ staging รับได้จาก develop และ hotfix/*
           if [[ "$BASE" == "staging" ]]; then
-            if [[ "$HEAD" != "develop" && ! "$HEAD" =~ ^hotfix/ ]]; then
+            # 👉 develop → staging (ผ่านได้เลย)
+            if [[ "$HEAD" == "develop" ]]; then
+              echo "✅ develop -> staging OK"
+
+            # 👉 hotfix → staging (ต้อง strict)
+            elif [[ "$HEAD" =~ ^hotfix/ ]]; then
+              echo "🔍 validate hotfix is up-to-date with staging"
+
+              git fetch origin staging
+
+              # เช็คว่า staging เป็น ancestor ของ hotfix หรือไม่
+              git merge-base --is-ancestor origin/staging origin/$HEAD || {
+                ERROR="❌ hotfix must be up-to-date with staging"
+                CLOSE="true"
+              }
+
+            # 👉 อื่น ๆ = ไม่ให้เข้า
+            else
               ERROR="❌ You must merge into staging only from develop or hotfix/*"
               CLOSE="true"
             fi
           fi
 
-          # ✅ develop:
-          # - รับ feature / bugfix (ต้องแตกจาก develop)
-          # - แต่ถ้ามาจาก staging (sync) → ข้าม validation
+          # ❌ develop
           if [[ "$BASE" == "develop" ]]; then
+
             if [[ "$HEAD" =~ ^auto/sync ]]; then
               echo "ℹ️ Allow staging → develop (sync case)"
+
             else
+              echo "🔍 validate branch from develop"
+
               git fetch origin develop
 
+              # ตรวจว่า branch แตกจาก develop จริง
               git merge-base --is-ancestor origin/develop origin/$HEAD || {
-                ERROR="❌ Branch must be up-to-date with develop before merge."
+                ERROR="❌ Branch must be created from develop and up-to-date"
+                CLOSE="true"
               }
             fi
           fi
