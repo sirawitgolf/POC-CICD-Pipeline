@@ -3,8 +3,10 @@ name: Commit Lint
 on:
   pull_request:
     branches:
+      - main
+      - staging
       - develop
-    types:
+    types: 
       - opened
       - synchronize
       - reopened
@@ -16,6 +18,13 @@ jobs:
   commitlint:
     name: Validate Commit Messages
     runs-on: ubuntu-latest
+
+    if: |
+        github.base_ref == 'develop' ||
+        ( 
+          github.base_ref == 'staging' &&
+          startsWith(github.head_ref, 'hotfix/')
+        )
 
     steps:
       - name: Checkout

@@ -1,0 +1,36 @@
+name: Hotfix Propagation
+
+on:
+  push:
+    branches:
+      - staging   # trigger หลัง hotfix merge เข้า staging
+
+jobs:
+  propagate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 🔹 PR: staging → develop
+      - name: Create PR to develop
+        id: pr_develop
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: auto/sync-staging-to-develop-${{ github.run_id }}
+          delete-branch: true
+          base: develop
+          title: "Sync staging → develop"
+          body: "Auto PR to propagate hotfix from staging to develop"
+          commit-message: "chore: sync staging to develop"
+
+      # 🔹 Enable auto merge (develop)
+      - name: Enable auto-merge (develop)
+        if: steps.pr_develop.outputs.pull-request-number != ''
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ steps.pr_develop.outputs.pull-request-number }}
+          merge-method: merge
