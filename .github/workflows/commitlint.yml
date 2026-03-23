@@ -1,11 +1,15 @@
 name: Commit Lint
 
 on:
-  workflow_run:
-    workflows: 
-      - "Enforce Branch Flow"
-    types:
-      - completed
+  pull_request:
+    branches:
+      - main
+      - staging
+      - develop
+    types: 
+      - opened
+      - synchronize
+      - reopened
 permissions:
   contents: read      # สำหรับ checkout
   pull-requests: write  # สำหรับ comment PR
@@ -15,23 +19,14 @@ jobs:
     name: Validate Commit Messages
     runs-on: ubuntu-latest
 
-    # if: |
-    #   github.event.workflow_run.conclusion == 'success' &&
-    #   github.event.workflow_run.event == 'pull_request' &&
-    #   github.event.workflow_run.pull_requests &&
-    #   (
-    #     github.event.workflow_run.pull_requests.base.ref == 'develop' ||
-    #     ( 
-    #       startsWith(github.event.workflow_run.head_branch, 'hotfix/') &&
-    #       github.event.workflow_run.pull_requests.base.ref == 'staging'
-    #     )
-    #   )
+    if: |
+        github.base_ref == 'develop' ||
+        ( 
+          github.base_ref == 'staging' &&
+          startsWith(github.head_ref, 'hotfix/')
+        )
 
     steps:
-      - name: Debug payload
-        run: |
-          echo '${{ toJson(github.event.workflow_run) }}'
-
       - name: Checkout
         uses: actions/checkout@v4.2.2
         with:
