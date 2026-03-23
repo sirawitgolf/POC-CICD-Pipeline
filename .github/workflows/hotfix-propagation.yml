@@ -8,6 +8,7 @@ on:
 jobs:
   propagate:
     runs-on: ubuntu-latest
+    if: startsWith(github.head_ref, 'hotfix/')
 
     steps:
       - name: Checkout
