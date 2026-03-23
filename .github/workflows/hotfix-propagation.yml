@@ -3,7 +3,7 @@ name: Hotfix Propagation
 on:
   push:
     branches:
-      - main   # trigger หลัง hotfix merge เข้า main
+      - staging   # trigger หลัง hotfix merge เข้า staging
 
 jobs:
   propagate:
@@ -13,40 +13,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 🔹 PR: main → staging
-      - name: Create PR to staging
-        id: pr_staging
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: auto/hotfix-main-to-staging-${{ github.run_id }}
-          delete-branch: true
-          base: staging
-          title: "chore: propagate hotfix → staging"
-          body: "Auto PR to propagate hotfix from main to staging"
-          commit-message: "chore: propagate hotfix to staging"
-
-      # 🔹 Enable auto merge (staging)
-      - name: Enable auto-merge (staging)
-        if: steps.pr_staging.outputs.pull-request-number != ''
-        uses: peter-evans/enable-pull-request-automerge@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          pull-request-number: ${{ steps.pr_staging.outputs.pull-request-number }}
-          merge-method: merge
-
-      # 🔹 PR: main → develop
+      # 🔹 PR: staging → develop
       - name: Create PR to develop
         id: pr_develop
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          branch: auto/hotfix-main-to-develop-${{ github.run_id }}
+          branch: auto/sync-staging-to-develop-${{ github.run_id }}
           delete-branch: true
           base: develop
-          title: "chore: propagate hotfix → develop"
-          body: "Auto PR to propagate hotfix from main to develop"
-          commit-message: "chore: propagate hotfix to develop"
+          title: "Sync staging → develop"
+          body: "Auto PR to propagate hotfix from staging to develop"
+          commit-message: "chore: sync staging to develop"
 
       # 🔹 Enable auto merge (develop)
       - name: Enable auto-merge (develop)
