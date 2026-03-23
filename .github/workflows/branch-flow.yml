@@ -41,19 +41,27 @@ jobs:
             CLOSE="true"
           fi
 
-          # ❌ staging รับได้แค่จาก develop
-          if [[ "$BASE" == "staging" && "$HEAD" != "develop" ]]; then
-            ERROR="❌ You must merge into staging only from develop"
-            CLOSE="true"
+          # ✅ staging รับได้จาก develop และ hotfix/*
+          if [[ "$BASE" == "staging" ]]; then
+            if [[ "$HEAD" != "develop" && ! "$HEAD" =~ ^hotfix/ ]]; then
+              ERROR="❌ You must merge into staging only from develop or hotfix/*"
+              CLOSE="true"
+            fi
           fi
 
-          # ❌ develop ต้องมาจาก branch ที่แตกจาก develop เท่านั้น
+          # ✅ develop:
+          # - รับ feature / bugfix (ต้องแตกจาก develop)
+          # - แต่ถ้ามาจาก staging (sync) → ข้าม validation
           if [[ "$BASE" == "develop" ]]; then
-            git fetch origin develop
+            if [[ "$HEAD" =~ ^auto/sync ]]; then
+              echo "ℹ️ Allow staging → develop (sync case)"
+            else
+              git fetch origin develop
 
-            git merge-base --is-ancestor origin/develop origin/$HEAD || {
-              ERROR="❌ Branch must be up-to-date with develop before merge."
-            }
+              git merge-base --is-ancestor origin/develop origin/$HEAD || {
+                ERROR="❌ Branch must be up-to-date with develop before merge."
+              }
+            fi
           fi
 
           if [[ -n "$ERROR" ]]; then
@@ -66,7 +74,7 @@ jobs:
 
         # 💬 Delete comment บอกเหตุผลถ้าสำเร็จ
       - name: Delete comment on PR
-        if: success()
+        if: success() && github.event.pull_request.state == 'open'
         uses: actions/github-script@v7
         with:
           script: |
