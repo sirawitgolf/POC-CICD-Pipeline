@@ -9,7 +9,7 @@ on:
     types: [opened, synchronize, reopened]
 
 permissions:
-  pull-requests: write  # สำหรับ comment PR
+  pull-requests: write # สำหรับ comment PR
 
 jobs:
   validate-branch-flow:
@@ -55,8 +55,7 @@ jobs:
 
               # เช็คว่า staging เป็น ancestor ของ hotfix หรือไม่
               git merge-base --is-ancestor origin/staging origin/$HEAD || {
-                ERROR="❌ hotfix must be up-to-date with staging"
-                CLOSE="true"
+                ERROR="❌ hotfix must be created from staging and up-to-date"
               }
 
             # 👉 อื่น ๆ = ไม่ให้เข้า
@@ -80,7 +79,6 @@ jobs:
               # ตรวจว่า branch แตกจาก develop จริง
               git merge-base --is-ancestor origin/develop origin/$HEAD || {
                 ERROR="❌ Branch must be created from develop and up-to-date"
-                CLOSE="true"
               }
             fi
           fi
