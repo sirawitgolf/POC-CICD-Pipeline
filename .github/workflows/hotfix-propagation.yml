@@ -1,14 +1,15 @@
 name: Hotfix Propagation
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches:
       - staging   # trigger หลัง hotfix merge เข้า staging
 
 jobs:
   propagate:
     runs-on: ubuntu-latest
-    if: startsWith(github.head_ref, 'hotfix/')
+    if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'hotfix/')
 
     steps:
       - name: Checkout
