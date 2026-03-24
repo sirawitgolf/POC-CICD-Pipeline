@@ -17,7 +17,10 @@ jobs:
         with:
             fetch-depth: 0
 
-      - run: git fetch --unshallow
+      - name: Fix history
+        run: |
+          git fetch --unshallow || true
+          git fetch origin +refs/heads/*:refs/remotes/origin/*
 
       - name: Debug branch
         run: |
