@@ -17,6 +17,13 @@ jobs:
         with:
             fetch-depth: 0
 
+      - name: Debug Info
+        run: |
+          echo "PR #${{ github.event.pull_request.number }} merged into staging"
+          echo "Head Ref: ${{ github.head_ref }}"
+          echo "Base Ref: ${{ github.base_ref }}"
+          git log --oneline origin/develop..origin/staging
+
       # 🔹 PR: staging → develop
       - name: Create PR to develop
         id: pr_develop
@@ -24,7 +31,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: auto/sync-staging-to-develop-${{ github.run_id }}
-          delete-branch: true
+        #   delete-branch: true
           base: develop
           title: "Sync staging → develop"
           body: "Auto PR to propagate hotfix from staging to develop"
