@@ -17,10 +17,7 @@ jobs:
         with:
             fetch-depth: 0
 
-      - name: Checkout staging (clean)
-        run: |
-          git fetch origin
-          git checkout -B staging origin/staging
+      - run: git fetch --unshallow
 
       - name: Debug branch
         run: |
@@ -34,6 +31,7 @@ jobs:
           echo "Head Ref: ${{ github.head_ref }}"
           echo "Base Ref: ${{ github.base_ref }}"
           git log --oneline origin/develop..origin/staging
+          git rev-list --right-only --count origin/develop...origin/staging
 
       # 🔹 PR: staging → develop
       - name: Create PR to develop
