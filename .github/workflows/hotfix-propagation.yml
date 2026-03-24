@@ -12,10 +12,10 @@ jobs:
     if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'hotfix/')
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-            fetch-depth: 0
+      - name: Checkout staging (clean)
+        run: |
+          git fetch origin
+          git checkout -B staging origin/staging
 
       - name: Debug branch
         run: |
