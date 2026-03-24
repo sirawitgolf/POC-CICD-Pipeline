@@ -1,30 +1,58 @@
 name: Hotfix Propagation
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches:
       - staging   # trigger หลัง hotfix merge เข้า staging
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   propagate:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'hotfix/')
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
-      # 🔹 PR: staging → develop
-      - name: Create PR to develop
-        id: pr_develop
-        uses: peter-evans/create-pull-request@v6
+        uses: actions/checkout@v6
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+            fetch-depth: 0
+
+      - name: Prepare branch diff
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout develop
+          git pull origin develop
+          git merge origin/staging --no-edit
+
+      - name: Check if staging ahead of develop
+        id: diff
+        run: |
+          COUNT=$(git rev-list --count origin/develop..origin/staging)
+          echo "$COUNT commits ahead in staging compared to develop"
+          echo "count=$COUNT" >> $GITHUB_OUTPUT
+
+        # 🔹 PR: staging → develop
+      - name: Create PR to develop
+        if: steps.diff.outputs.count != '0'
+        id: pr_develop
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.PAT }}
           branch: auto/sync-staging-to-develop-${{ github.run_id }}
           delete-branch: true
           base: develop
           title: "Sync staging → develop"
+          labels: |
+            auto-sync
           body: "Auto PR to propagate hotfix from staging to develop"
           commit-message: "chore: sync staging to develop"
+          committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+          author: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>
 
       # 🔹 Enable auto merge (develop)
       - name: Enable auto-merge (develop)
