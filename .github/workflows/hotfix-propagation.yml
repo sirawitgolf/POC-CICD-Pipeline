@@ -21,20 +21,6 @@ jobs:
         with:
             fetch-depth: 0
 
-      - name: Debug branch
-        run: |
-          echo "Current branch:"
-          git branch
-          git log --oneline -5
-
-      - name: Debug Info
-        run: |
-          echo "PR #${{ github.event.pull_request.number }} merged into staging"
-          echo "Head Ref: ${{ github.event.pull_request.head.ref }}"
-          echo "Base Ref: ${{ github.event.pull_request.base.ref }}"
-          git log --oneline origin/develop..origin/staging
-          git rev-list --right-only --count origin/develop...origin/staging
-
       - name: Prepare branch diff
         run: |
           git checkout develop
