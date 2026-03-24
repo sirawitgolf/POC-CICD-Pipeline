@@ -9,7 +9,7 @@ on:
 jobs:
   propagate:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'hotfix/')
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'hotfix/')
 
     steps:
       - name: Checkout
@@ -26,11 +26,17 @@ jobs:
       - name: Debug Info
         run: |
           echo "PR #${{ github.event.pull_request.number }} merged into staging"
-          echo "Head Ref: ${{ github.head_ref }}"
-          echo "Base Ref: ${{ github.base_ref }}"
+          echo "Head Ref: ${{ github.event.pull_request.head.ref }}"
+          echo "Base Ref: ${{ github.event.pull_request.base.ref }}"
           git log --oneline origin/develop..origin/staging
           git rev-list --right-only --count origin/develop...origin/staging
 
+      - name: Prepare branch diff
+        run: |
+          git checkout develop
+          git pull origin develop
+          git merge origin/staging --no-edit
+          
       - name: Check if staging ahead of develop
         id: diff
         run: |
