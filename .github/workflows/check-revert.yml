@@ -6,6 +6,10 @@ on:
       - main
       - staging
       - develop
+    types: 
+      - opened
+      - synchronize
+      - reopened
 
 jobs:
   check-revert:
