@@ -17,6 +17,12 @@ jobs:
         with:
             fetch-depth: 0
 
+      - name: Debug branch
+        run: |
+          echo "Current branch:"
+          git branch
+          git log --oneline -5
+
       - name: Debug Info
         run: |
           echo "PR #${{ github.event.pull_request.number }} merged into staging"
