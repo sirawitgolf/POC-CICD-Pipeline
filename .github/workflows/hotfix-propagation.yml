@@ -6,6 +6,10 @@ on:
     branches:
       - staging   # trigger หลัง hotfix merge เข้า staging
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   propagate:
     runs-on: ubuntu-latest
@@ -36,7 +40,7 @@ jobs:
           git checkout develop
           git pull origin develop
           git merge origin/staging --no-edit
-          
+
       - name: Check if staging ahead of develop
         id: diff
         run: |
