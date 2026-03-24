@@ -13,14 +13,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-        with:
-            fetch-depth: 0
-
-      - name: Fix history
-        run: |
-          git fetch --unshallow || true
-          git fetch origin +refs/heads/*:refs/remotes/origin/*
+        uses: actions/checkout@v6
 
       - name: Debug branch
         run: |
@@ -39,7 +32,7 @@ jobs:
       # 🔹 PR: staging → develop
       - name: Create PR to develop
         id: pr_develop
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: auto/sync-staging-to-develop-${{ github.run_id }}
