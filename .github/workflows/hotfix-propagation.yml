@@ -31,8 +31,16 @@ jobs:
           git log --oneline origin/develop..origin/staging
           git rev-list --right-only --count origin/develop...origin/staging
 
-      # 🔹 PR: staging → develop
+      - name: Check if staging ahead of develop
+        id: diff
+        run: |
+          COUNT=$(git rev-list --count origin/develop..origin/staging)
+          echo "$COUNT commits ahead in staging compared to develop"
+          echo "count=$COUNT" >> $GITHUB_OUTPUT
+
+        # 🔹 PR: staging → develop
       - name: Create PR to develop
+        if: steps.diff.outputs.count != '0'
         id: pr_develop
         uses: peter-evans/create-pull-request@v8
         with:
