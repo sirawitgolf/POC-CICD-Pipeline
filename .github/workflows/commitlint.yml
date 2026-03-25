@@ -13,6 +13,10 @@ permissions:
   contents: read      # สำหรับ checkout
   pull-requests: write  # สำหรับ comment PR
 
+concurrency:
+  group: commitlint-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   commitlint:
     name: Validate Commit Messages
